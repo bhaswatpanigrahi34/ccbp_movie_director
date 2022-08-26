@@ -27,13 +27,31 @@ const initializeDBAndServer = async () => {
 
 initializeDBAndServer();
 
+const convertMovieDbObjectToResponseObject = (dbObject) => {
+  return {
+    movieId: dbObject.movie_id,
+    directorId: dbObject.director_id,
+    movieName: dbObject.movie_name,
+    leadActor: dbObject.lead_actor,
+  };
+};
+
+const convertDirectorDbObjectToResponseObject = (dbObject) => {
+  return {
+    directorId: dbObject.director_id,
+    directorName: dbObject.director_name,
+  };
+};
+
 // Get all the movies
 app.get("/movies/", async (request, response) => {
   const getMoviesQuery = `
     SELECT movie_name
     FROM movie`;
   const movies = await db.all(getMoviesQuery);
-  response.send(movies);
+  response.send(
+    movies.map((eachMovie) => ({ movieName: eachMovie.movie_name }))
+  );
 });
 
 // Get a movie
@@ -44,7 +62,7 @@ app.get("/movies/:movieId/", async (request, response) => {
     FROM movie 
     WHERE movie_id = ${movieId};`;
   const movie = await db.get(getMovieQuery);
-  response.send(movie);
+  response.send(convertMovieDbObjectToResponseObject(movie));
 });
 
 // Post a movie
@@ -93,7 +111,11 @@ app.get("/directors/", async (request, response) => {
     SELECT * 
     FROM director;`;
   const director = await db.all(getDirectorQuery);
-  response.send(director);
+  response.send(
+    director.map((eachDirector) =>
+      convertDirectorDbObjectToResponseObject(eachDirector)
+    )
+  );
 });
 
 //
@@ -104,7 +126,8 @@ app.get("/directors/:directorId/movies/", async (request, response) => {
     FROM movie
     WHERE director_id = ${directorId};`;
   const director = await db.all(getMovieDirectorQuery);
-  response.send(director);
+  response.send(
+    director.map((eachMovie) => ({ movieName: eachMovie.movie_name }))
+  );
 });
-
 module.exports = app;
